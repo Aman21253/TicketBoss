@@ -1,0 +1,5 @@
+
+> ticketboss@1.0.0 start
+> node src/server.js
+
+TicketBoss API running on port 3000

@@ -4,7 +4,6 @@ const path = require('path');
 const dbPath = path.resolve(__dirname, '../ticketboss.db');
 const db = new Database(dbPath/*, { verbose: console.log } */);
 
-// Enable WAL mode for better concurrency
 // Enable WAL mode for better concurrency and enforcing foreign keys
 db.pragma('journal_mode = WAL');
 db.pragma('foreign_keys = ON');

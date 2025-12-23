@@ -8,12 +8,11 @@ const reservationSchema = z.object({
 });
 
 exports.reserveSeats = (req, res) => {
-    // 4. Evaluation Criteria > Validation: Is user input validated effectively?
-    // Using Zod for strict validation of types and ranges.
+    // Validate request body using Zod
     const result = reservationSchema.safeParse(req.body);
 
     if (!result.success) {
-        // Fallback or issues
+        // Extract validation error message
         const errorMsg = result.error.issues?.[0]?.message || result.error.errors?.[0]?.message || 'Invalid input';
         return res.status(400).json({ error: errorMsg });
     }
@@ -24,7 +23,6 @@ exports.reserveSeats = (req, res) => {
         const result = service.reserveSeats(partnerId, seats);
 
         if (result.success) {
-            // Functionality > 2. Reserve Seats > Response 201 Created
             return res.status(201).json({
                 reservationId: result.reservationId,
                 seats: seats,
@@ -53,10 +51,8 @@ exports.cancelReservation = (req, res) => {
         const result = service.cancelReservation(reservationId);
 
         if (result.success) {
-            // Functionality > 3. Cancel Reservation > Response 204 No Content
             return res.status(204).send();
         } else {
-            // Functionality > 3. Cancel Reservation > Response 404 Not Found
             return res.status(404).json({ error: 'Reservation not found or already cancelled' });
         }
     } catch (error) {

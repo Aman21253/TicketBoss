@@ -16,15 +16,14 @@ class TicketService {
 
     // Returns { success: boolean, reservationId?: string, error?: string, type?: 'CONFLICT' | 'BAD_REQUEST' }
     reserveSeats(partnerId, seats) {
-        // 4. Evaluation Criteria > Validation
+        // Basic validation for seats
         if (typeof seats !== 'number' || seats <= 0 || seats > 10) {
             return { success: false, error: 'Invalid number of seats (1-10 allowed)', type: 'BAD_REQUEST' };
         }
 
-        // 2. Project Structure > Technical Decisions > Storage Method
-        // We use a transaction to ensure atomicity of the check and update.
+        // Use a transaction to ensure atomicity of the check and update.
         const makeReservationTx = db.transaction(() => {
-            // 1. Read current state (including version)
+            // Read current state (including version)
             const event = db.prepare('SELECT availableSeats, version FROM events WHERE id = ?').get(this.eventId);
 
             if (!event) {
@@ -36,8 +35,8 @@ class TicketService {
                 return { success: false, error: 'Not enough seats left', type: 'CONFLICT' };
             }
 
-            // 2. Attempt Optimistic Update
-            // "availableSeats >= ?" safety check is partly redundant due to optimistic locking but good for extra safety
+            // Attempt Optimistic Update
+            // "availableSeats >= ?" safety check acts as a secondary guard
             const result = db.prepare(`
         UPDATE events
         SET availableSeats = availableSeats - ?,
@@ -48,12 +47,12 @@ class TicketService {
       `).run(seats, this.eventId, event.version, seats);
 
             // If changes === 0, it means the version changed since our read (concurrency conflict)
-            // or seats were taken. We strictly follow "instant accept/deny" -> deny.
+            // or seats were taken. We deny the request.
             if (result.changes === 0) {
                 return { success: false, error: 'Concurrency conflict or seats taken', type: 'CONFLICT' };
             }
 
-            // 3. Create Reservation Record
+            // Create Reservation Record
             const reservationId = uuidv4();
             db.prepare(`
         INSERT INTO reservations (id, eventId, partnerId, seats, status)
@@ -80,7 +79,7 @@ class TicketService {
                 return { success: false, type: 'NOT_FOUND' };
             }
 
-            // Return seats to pool & Increment Version (OCC requirement for aggregate consistency)
+            // Return seats to pool & Increment Version
             db.prepare(`
             UPDATE events
             SET availableSeats = availableSeats + ?,
