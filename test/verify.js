@@ -54,17 +54,6 @@ async function runTests() {
     console.log('Summary after cancel:', summary.body);
     if (summary.body.availableSeats !== 500) throw new Error('Seats not returned');
 
-    // 6. Concurrency Test
-    console.log('6. Concurrency Test (5 requests for 100 seats each simultaneously)...');
-    // 500 seats logic.
-    // We'll try to book 150 seats x 4 requests = 600 seats. 
-    // Should accept 3, reject 1 (or partials if logic allowed, but we require atomic all-or-nothing per request)
-
-    // Actually let's try to update THE SAME version if we can force it, but HTTP hides version.
-    // We rely on the server handling race conditions.
-    // Let's send 20 requests for 30 seats. 20 * 30 = 600.
-    // Should stop at 500 used.
-
     const promises = [];
     for (let i = 0; i < 60; i++) {
         promises.push(request('POST', '/reservations', { partnerId: `partner-${i}`, seats: 10 }));
@@ -78,13 +67,6 @@ async function runTests() {
     summary = await request('GET', '/reservations');
     console.log('Final Summary:', summary.body);
 
-    // 500 / 30 = 16.66. Use 16 requests * 30 = 480 seats.
-    // So we expect 16 successes, 4 conflicts.
-    // OR if race conditions happen and 409s occur due to retries (if we had retries) or just failures.
-    // Since we have NO retries, strict OCC, if two requests read same version, one writes, other fails.
-    // So we might get FEWER than 16 successes if collisions occur high enough.
-    // But correctness means: availableSeats + reservationCount * seats == 500 (roughly).
-    // Strictly: Final Available + Sum(Accepted Seats) = 500.
 
     const totalBooked = successes * 10;
     if (summary.body.availableSeats + totalBooked !== 500) {
