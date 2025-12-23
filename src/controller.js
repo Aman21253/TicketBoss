@@ -1,14 +1,24 @@
 const service = require('./service');
+const { z } = require('zod');
+
+// Schema for request validation
+const reservationSchema = z.object({
+    partnerId: z.string().min(1, 'partnerId must be a non-empty string'),
+    seats: z.number().int().min(1).max(10, 'seats must be between 1 and 10')
+});
 
 exports.reserveSeats = (req, res) => {
     // 4. Evaluation Criteria > Validation: Is user input validated effectively?
-    // Added safety check for empty body, although express.json() usually handles it.
-    const { partnerId, seats } = req.body || {};
+    // Using Zod for strict validation of types and ranges.
+    const result = reservationSchema.safeParse(req.body);
 
-    // Basic validation for missing fields
-    if (!partnerId || !seats) {
-        return res.status(400).json({ error: 'Missing partnerId or seats' });
+    if (!result.success) {
+        // Fallback or issues
+        const errorMsg = result.error.issues?.[0]?.message || result.error.errors?.[0]?.message || 'Invalid input';
+        return res.status(400).json({ error: errorMsg });
     }
+
+    const { partnerId, seats } = result.data;
 
     try {
         const result = service.reserveSeats(partnerId, seats);

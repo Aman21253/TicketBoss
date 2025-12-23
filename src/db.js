@@ -5,7 +5,16 @@ const dbPath = path.resolve(__dirname, '../ticketboss.db');
 const db = new Database(dbPath/*, { verbose: console.log } */);
 
 // Enable WAL mode for better concurrency
+// Enable WAL mode for better concurrency and enforcing foreign keys
 db.pragma('journal_mode = WAL');
+db.pragma('foreign_keys = ON');
+
+// Graceful shutdown
+process.on('SIGINT', () => {
+  console.log('Closing database connection...');
+  db.close();
+  process.exit(0);
+});
 
 function initializeDatabase() {
   // Create Events table
