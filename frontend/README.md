@@ -1,16 +1,42 @@
-# React + Vite
+# TicketBoss Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+This is the React-based user interface for the TicketBoss API. It provides a real-time dashboard for viewing seat availability and making reservations.
 
-Currently, two official plugins are available:
+## Technology Stack
+-   **React 18**: Core UI library.
+-   **Vite**: Next-generation build tool for fast development.
+-   **Vanilla CSS**: Custom styling with CSS Variables for a premium, lightweight aesthetic.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## Architecture
 
-## React Compiler
+### 1. Communication with Backend
+-   **API Endpoint**: The frontend connects to `http://localhost:3000`.
+-   **CORS**: The backend was configured to allow specific cross-origin requests from this frontend (running on port 5173).
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+### 2. Real-Time Data (Polling)
+-   Since the backend is a simple REST API (not WebSockets), the frontend uses **Short Polling**.
+-   **Mechanism**: A `setInterval` runs every **2 seconds** to fetch `GET /reservations/`.
+-   **Benefit**: Keeps the "Seats Available" counter nearly live without complex socket infrastructure.
 
-## Expanding the ESLint configuration
+### 3. State Management
+-   `eventData`: Stores the full event object (name, total seats, available seats).
+-   `status`: Handles UI feedback (success green toasts, error red toasts).
+-   `loading`: Disables the button during the network request to prevent double-submissions.
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+## Project Structure
+```
+frontend/
+├── index.html       # HTML entry point
+├── src/
+│   ├── main.jsx     # React root mounting
+│   ├── App.jsx      # Main application logic & layout
+│   └── App.css      # Global styles & refined UI components
+└── package.json     # Dependencies
+```
+
+## Running the Frontend
+```bash
+npm install
+npm run dev
+```
+Open `http://localhost:5173`.
